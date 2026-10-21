@@ -28,8 +28,8 @@ targets:
       properties:
         CFBundleDisplayName: "Work Hub"
         CFBundleIdentifier: "me.buongloi.workhub"
-        CFBundleShortVersionString: "2.0.0"
-        CFBundleVersion: "2"
+        CFBundleShortVersionString: "2.1.0"
+        CFBundleVersion: "3"
         UILaunchScreen: {}
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: true
@@ -37,6 +37,27 @@ targets:
         UIRequiresFullScreen: true
         UIStatusBarStyle: UIStatusBarStyleLightContent
         UIViewControllerBasedStatusBarAppearance: false
+        NSCameraUsageDescription: "Work Hub cần quyền Camera để chụp ảnh biên bản giao việc, bảng phân ca và tài liệu cho AI phân tích."
+        NSMicrophoneUsageDescription: "Work Hub cần quyền Microphone để ghi âm giọng nói tiếng Việt chuyển thành công việc tự động."
+        NSSpeechRecognitionUsageDescription: "Work Hub sử dụng nhận diện giọng nói để thêm việc nhanh không cần gõ phím."
+        NSPhotoLibraryUsageDescription: "Work Hub cần quyền Thư viện ảnh để tải ảnh lên cho AI phân tích."
+        UIApplicationShortcutItems:
+          - UIApplicationShortcutItemType: "me.buongloi.workhub.aiscan"
+            UIApplicationShortcutItemTitle: "Quét Ảnh & Giọng Nói AI"
+            UIApplicationShortcutItemSubtitle: "Tạo việc từ Camera hoặc Mic"
+            UIApplicationShortcutItemIconType: "UIApplicationShortcutIconTypeCapturePhoto"
+          - UIApplicationShortcutItemType: "me.buongloi.workhub.focus"
+            UIApplicationShortcutItemTitle: "Focus & Nhạc Lofi"
+            UIApplicationShortcutItemSubtitle: "Đồng hồ Pomodoro tập trung"
+            UIApplicationShortcutItemIconType: "UIApplicationShortcutIconTypeTime"
+          - UIApplicationShortcutItemType: "me.buongloi.workhub.kanban"
+            UIApplicationShortcutItemTitle: "Bảng Kanban"
+            UIApplicationShortcutItemSubtitle: "Xem tiến độ kéo thả"
+            UIApplicationShortcutItemIconType: "UIApplicationShortcutIconTypeTaskCompleted"
+          - UIApplicationShortcutItemType: "me.buongloi.workhub.scratchpad"
+            UIApplicationShortcutItemTitle: "Nháp Nhanh"
+            UIApplicationShortcutItemSubtitle: "Ghi nhanh ý tưởng tức thì"
+            UIApplicationShortcutItemIconType: "UIApplicationShortcutIconTypeCompose"
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft

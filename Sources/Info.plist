@@ -17,9 +17,9 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.0.0</string>
+	<string>2.1.0</string>
 	<key>CFBundleVersion</key>
-	<string>2</string>
+	<string>3</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
@@ -29,6 +29,57 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Work Hub cần quyền Camera để chụp ảnh biên bản giao việc, bảng phân ca và tài liệu cho AI phân tích.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Work Hub cần quyền Microphone để ghi âm giọng nói tiếng Việt chuyển thành công việc tự động.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Work Hub sử dụng nhận diện giọng nói để thêm việc nhanh không cần gõ phím.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Work Hub cần quyền Thư viện ảnh để tải ảnh lên cho AI phân tích.</string>
+	<key>UIApplicationShortcutItems</key>
+	<array>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>me.buongloi.workhub.aiscan</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Quét Ảnh &amp; Giọng Nói AI</string>
+			<key>UIApplicationShortcutItemSubtitle</key>
+			<string>Tạo việc từ Camera hoặc Mic</string>
+			<key>UIApplicationShortcutItemIconType</key>
+			<string>UIApplicationShortcutIconTypeCapturePhoto</string>
+		</dict>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>me.buongloi.workhub.focus</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Focus &amp; Nhạc Lofi</string>
+			<key>UIApplicationShortcutItemSubtitle</key>
+			<string>Đồng hồ Pomodoro tập trung</string>
+			<key>UIApplicationShortcutItemIconType</key>
+			<string>UIApplicationShortcutIconTypeTime</string>
+		</dict>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>me.buongloi.workhub.kanban</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Bảng Kanban</string>
+			<key>UIApplicationShortcutItemSubtitle</key>
+			<string>Xem tiến độ kéo thả</string>
+			<key>UIApplicationShortcutItemIconType</key>
+			<string>UIApplicationShortcutIconTypeTaskCompleted</string>
+		</dict>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>me.buongloi.workhub.scratchpad</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Nháp Nhanh</string>
+			<key>UIApplicationShortcutItemSubtitle</key>
+			<string>Ghi nhanh ý tưởng tức thì</string>
+			<key>UIApplicationShortcutItemIconType</key>
+			<string>UIApplicationShortcutIconTypeCompose</string>
+		</dict>
+	</array>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>armv7</string>

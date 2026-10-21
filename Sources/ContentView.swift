@@ -1,16 +1,16 @@
 import SwiftUI
 import WebKit
 import UIKit
+import UserNotifications
+import AVFoundation
 
 struct ContentView: View {
     @State private var isLoading = true
     @State private var loadFailed = false
     @State private var reloadToken = UUID()
     @State private var estimatedProgress: Double = 0.0
+    @State private var activeURL = URL(string: "https://work.buongloi.me")!
 
-    let targetURL = URL(string: "https://work.buongloi.me")!
-
-    // Linear / Raycast Indigo-Violet Brand Palette (#09090B, #6366F1, #8B5CF6)
     private let bgDark = Color(red: 0.035, green: 0.035, blue: 0.043)         // #09090B
     private let indigoAccent = Color(red: 0.388, green: 0.400, blue: 0.945)   // #6366F1
     private let violetAccent = Color(red: 0.545, green: 0.361, blue: 0.965)   // #8B5CF6
@@ -21,7 +21,7 @@ struct ContentView: View {
                 .ignoresSafeArea(.all)
 
             WebViewContainer(
-                url: targetURL,
+                url: activeURL,
                 isLoading: $isLoading,
                 loadFailed: $loadFailed,
                 progress: $estimatedProgress,
@@ -70,7 +70,7 @@ struct ContentView: View {
                         .font(.system(size: 22, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
 
-                    Text("Personal Task & Knowledge Workspace • v2.0")
+                    Text("Shift Cockpit • AI Vision & Focus • v2.1")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(Color(white: 0.62))
 
@@ -133,6 +133,30 @@ struct ContentView: View {
             }
         }
         .animation(.easeInOut(duration: 0.25), value: isLoading)
+        .onReceive(NotificationCenter.default.publisher(for: .workHubQuickAction)) { note in
+            guard let shortcutType = note.object as? String else { return }
+            let impact = UIImpactFeedbackGenerator(style: .medium)
+            impact.impactOccurred()
+
+            let targetPath: String
+            switch shortcutType {
+            case "me.buongloi.workhub.aiscan":
+                targetPath = "https://work.buongloi.me/today?action=ai-scan"
+            case "me.buongloi.workhub.focus":
+                targetPath = "https://work.buongloi.me/today?action=focus"
+            case "me.buongloi.workhub.kanban":
+                targetPath = "https://work.buongloi.me/tasks?view=board"
+            case "me.buongloi.workhub.scratchpad":
+                targetPath = "https://work.buongloi.me/scratchpad"
+            default:
+                targetPath = "https://work.buongloi.me/today"
+            }
+
+            if let newURL = URL(string: targetPath) {
+                activeURL = newURL
+                reloadToken = UUID()
+            }
+        }
     }
 }
 
@@ -154,10 +178,11 @@ struct WebViewContainer: UIViewRepresentable {
         config.mediaTypesRequiringUserActionForPlayback = []
         config.defaultWebpagePreferences.allowsContentJavaScript = true
         config.websiteDataStore = WKWebsiteDataStore.default()
-        config.applicationNameForUserAgent = "WorkHubApp/2.0 (iOS)"
+        config.applicationNameForUserAgent = "WorkHubApp/2.1 (iOS)"
 
         let userContentController = WKUserContentController()
         userContentController.add(context.coordinator, name: "haptic")
+        userContentController.add(context.coordinator, name: "workhub")
         config.userContentController = userContentController
 
         let webView = WKWebView(frame: .zero, configuration: config)
@@ -194,8 +219,7 @@ struct WebViewContainer: UIViewRepresentable {
     func updateUIView(_ webView: WKWebView, context: Context) {
         if context.coordinator.lastReloadToken != reloadToken {
             context.coordinator.lastReloadToken = reloadToken
-            let target = webView.url ?? url
-            let request = URLRequest(url: target, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 25)
+            let request = URLRequest(url: url, cachePolicy: .useProtocolCachePolicy, timeoutInterval: 25)
             webView.load(request)
         }
     }
@@ -224,6 +248,49 @@ struct WebViewContainer: UIViewRepresentable {
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
             if message.name == "haptic" {
                 let styleStr = (message.body as? String) ?? "light"
+                triggerHaptic(styleStr: styleStr)
+                return
+            }
+
+            guard message.name == "workhub",
+                  let body = message.body as? [String: Any],
+                  let type = body["type"] as? String else { return }
+
+            let payload = body["payload"]
+
+            switch type {
+            case "haptic":
+                if let dict = payload as? [String: Any], let style = dict["style"] as? String {
+                    triggerHaptic(styleStr: style)
+                } else {
+                    triggerHaptic(styleStr: "medium")
+                }
+
+            case "scheduleNotifications":
+                handleScheduleNotifications(payload)
+
+            case "setSound":
+                if let dict = payload as? [String: Any], let enabled = dict["enabled"] as? Bool {
+                    if enabled {
+                        try? AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default)
+                        try? AVAudioSession.sharedInstance().setActive(true)
+                    } else {
+                        try? AVAudioSession.sharedInstance().setActive(false)
+                    }
+                }
+
+            case "shareText":
+                if let dict = payload as? [String: Any], let text = dict["text"] as? String {
+                    presentShareSheet(items: [text])
+                }
+
+            default:
+                break
+            }
+        }
+
+        private func triggerHaptic(styleStr: String) {
+            DispatchQueue.main.async {
                 let style: UIImpactFeedbackGenerator.FeedbackStyle
                 switch styleStr {
                 case "heavy": style = .heavy
@@ -232,9 +299,79 @@ struct WebViewContainer: UIViewRepresentable {
                 case "soft": style = .soft
                 default: style = .light
                 }
-                let impact = UIImpactFeedbackGenerator(style: style)
-                impact.impactOccurred()
+                let generator = UIImpactFeedbackGenerator(style: style)
+                generator.prepare()
+                generator.impactOccurred()
             }
+        }
+
+        private func presentShareSheet(items: [Any]) {
+            DispatchQueue.main.async {
+                guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                      let rootVC = windowScene.windows.first(where: { $0.isKeyWindow })?.rootViewController else { return }
+
+                let activityVC = UIActivityViewController(activityItems: items, applicationActivities: nil)
+                if let popover = activityVC.popoverPresentationController {
+                    popover.sourceView = rootVC.view
+                    popover.sourceRect = CGRect(x: rootVC.view.bounds.midX, y: rootVC.view.bounds.midY, width: 0, height: 0)
+                    popover.permittedArrowDirections = []
+                }
+
+                var topVC = rootVC
+                while let presented = topVC.presentedViewController {
+                    topVC = presented
+                }
+                topVC.present(activityVC, animated: true)
+            }
+        }
+
+        private func handleScheduleNotifications(_ payload: Any?) {
+            guard let items = payload as? [[String: Any]] else { return }
+            let center = UNUserNotificationCenter.current()
+
+            center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+                guard granted else { return }
+                center.removeAllPendingNotificationRequests()
+
+                let isoFractional = ISO8601DateFormatter()
+                isoFractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                let isoStandard = ISO8601DateFormatter()
+
+                for item in items {
+                    guard let id = item["id"] as? String,
+                          let dateStr = item["date"] as? String,
+                          let title = item["title"] as? String,
+                          let body = item["body"] as? String else { continue }
+
+                    guard let date = isoFractional.date(from: dateStr) ?? isoStandard.date(from: dateStr) else { continue }
+                    if date <= Date() { continue }
+
+                    let content = UNMutableNotificationContent()
+                    content.title = title
+                    content.body = body
+                    content.sound = .default
+
+                    let components = Calendar.current.dateComponents(
+                        [.year, .month, .day, .hour, .minute, .second],
+                        from: date
+                    )
+                    let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+                    let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+                    center.add(request, withCompletionHandler: nil)
+                }
+            }
+        }
+
+        // Auto-grant Microphone & Camera capture inside WKWebView for Voice-to-Task & AI Vision
+        @available(iOS 15.0, *)
+        func webView(
+            _ webView: WKWebView,
+            requestMediaCapturePermissionFor origin: WKSecurityOrigin,
+            initiatedByFrame frame: WKFrameInfo,
+            type: WKMediaCaptureType,
+            decisionHandler: @escaping (WKPermissionDecision) -> Void
+        ) {
+            decisionHandler(.grant)
         }
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
@@ -282,7 +419,6 @@ struct WebViewContainer: UIViewRepresentable {
             webView.reload()
         }
 
-        // Handle target="_blank" & window.open links (keep internal & Cloudflare Access inside WebView, open external bookmarks in Safari)
         func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
             guard let targetURL = navigationAction.request.url else { return nil }
             let host = targetURL.host?.lowercased() ?? ""
